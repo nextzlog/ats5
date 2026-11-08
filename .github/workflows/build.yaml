@@ -1,0 +1,110 @@
+name: build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npx -y -p typescript@5.6.3 tsc -p apps/ats5/web
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
+        env:
+          TZ: Asia/Tokyo
+
+  build:
+    needs: check
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: ats5-linux-x86_64
+            file: ats5
+          - os: macos-latest
+            name: ats5-macos-aarch64
+            file: ats5
+          - os: windows-latest
+            name: ats5-windows-x86_64.exe
+            file: ats5.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - run: cargo build --release -p ats5
+      - run: mv target/release/${{ matrix.file }} ${{ matrix.name }}
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}
+
+  release:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: latest
+          prerelease: true
+          files: ats5-*
+
+  site:
+    needs: check
+    runs-on: ubuntu-latest
+    env:
+      ATS5_SKIP_WASM: 1
+      CXXFLAGS_wasm32_unknown_emscripten: -include stdlib.h -fwasm-exceptions
+      CARGO_TARGET_WASM32_UNKNOWN_EMSCRIPTEN_RUSTFLAGS: >-
+        -C link-arg=-lc++ -C link-arg=-lc++abi -C link-arg=-lidbfs.js
+        -C link-arg=-sMODULARIZE=1 -C link-arg=-sEXPORT_ES6=1 -C link-arg=-sEXPORT_NAME=ATS5
+        -C link-arg=-sFORCE_FILESYSTEM=1 -C link-arg=-sALLOW_MEMORY_GROWTH=1
+        -C link-arg=-sEXPORTED_RUNTIME_METHODS=FS,IDBFS,HEAPU8
+        -C link-arg=-sEXPORTED_FUNCTIONS=_ats5_alloc,_ats5_free,_ats5_open,_ats5_request,_main
+        -C link-arg=-sENVIRONMENT=web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-emscripten
+      - uses: mymindstorm/setup-emsdk@v14
+      - run: cargo build --release -p ats5-site --target wasm32-unknown-emscripten
+      - run: cargo run --release --example site -- site
+      - run: cp target/wasm32-unknown-emscripten/release/ats5-site.js target/wasm32-unknown-emscripten/release/ats5_site.wasm site/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  pages:
+    needs: site
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,17 @@
+[package]
+name = "ats5-lua"
+description = "Contest rules of ATS-5 written in Luau."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+ats5-core.workspace = true
+mlua = { version = "0.11", features = ["luau", "send"] }
+rxsl.workspace = true
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+ureq = "3"
+

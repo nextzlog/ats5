@@ -1,0 +1,11 @@
+[package]
+name = "ats5-core"
+description = "Contest rules and extension registry of ATS-5."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+rxsl.workspace = true

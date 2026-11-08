@@ -1,0 +1,16 @@
+[package]
+name = "ats5-site"
+description = "ATS-5 running entirely in the browser."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+ats5 = { path = "../ats5" }
+axum = { version = "0.8", default-features = false }
+axum-extra = { version = "0.12", features = ["cookie-signed"] }
+futures-executor = "0.3"
+http-body-util = "0.1"
+tower = { version = "0.5", features = ["util"] }
