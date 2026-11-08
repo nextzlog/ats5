@@ -1,0 +1,13 @@
+[package]
+name = "ats5-allja1"
+description = "ALLJA1 contest rules for ATS-5."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+ats5-core.workspace = true
+rxsl.workspace = true
+ats5-japan.workspace = true

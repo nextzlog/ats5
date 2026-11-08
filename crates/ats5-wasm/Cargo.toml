@@ -1,0 +1,18 @@
+[package]
+name = "ats5-wasm"
+description = "Contest rules of ATS-5 for checking logs in the browser."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+ats5-allja1.workspace = true
+ats5-core.workspace = true
+rxsl.workspace = true
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = ["crates/*", "apps/*"]
+
+[workspace.package]
+version = "5.0.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/nextzlog/ats5"
+publish = false
+
+[workspace.dependencies]
+rxsl = { git = "https://github.com/autodyne/rxsl", branch = "master" }
+ats5-core = { path = "crates/ats5-core" }
+ats5-japan = { path = "crates/ats5-japan" }
+ats5-allja1 = { path = "crates/ats5-allja1" }
+ats5-wasm = { path = "crates/ats5-wasm" }
+
+[profile.release.package.ats5-wasm]
+opt-level = "s"
